@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Daily Memo — 1日1メモ</title>
+<meta name="description" content="日付ごとに自動保存される1日1メモ">
+<style>
+  :root{--w:720px;--bg:#0b0b0b;--panel:#181818;--bd:#2a2a2a;--fg:#eaeaea;--muted:#a7a7a7;}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;display:grid;place-items:start;min-height:100dvh}
+  .wrap{width:min(94vw,var(--w));margin:28px auto}
+  h1{font-size:18px;margin:0 0 10px}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0 12px}
+  .panel{background:var(--panel);border:1px solid var(--bd);border-radius:14px;padding:14px}
+  input[type="date"],button,textarea{border:1px solid var(--bd);background:#101010;color:#fff;border-radius:10px}
+  input[type="date"]{padding:10px}
+  button{padding:10px 14px;cursor:pointer}
+  .ghost{background:#202020}
+  .primary{background:#2f6df6;border-color:#2f6df6}
+  .muted{color:var(--muted)}
+  .grid{display:grid;grid-template-columns:1fr;gap:12px}
+  .meta{display:flex;gap:10px;align-items:center;font-size:12px;color:var(--muted)}
+  textarea{width:100%;min-height:38dvh;padding:14px;line-height:1.5;resize:vertical}
+  .side{margin-top:12px;display:grid;gap:12px}
+  .list-item{border:1px dashed #333;border-radius:10px;padding:10px}
+  .list-item h4{margin:0 0 6px;font-size:14px}
+  .list-item p{margin:0;color:#c9c9c9;white-space:pre-wrap;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical}
+  .footer{margin-top:14px;font-size:12px;color:var(--muted)}
+  a{color:#9ad;text-decoration:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Daily Memo — 1日1メモ</h1>
+  <div class="panel grid">
+    <div class="row">
+      <input id="date" type="date" />
+      <button id="todayBtn" class="ghost">今日に戻る</button>
+      <span id="count" class="muted">0 文字</span>
+      <div style="flex:1"></div>
+      <button id="copyBtn" class="ghost">コピー</button>
+      <button id="clearBtn" class="ghost">今日のメモを空に</button>
+      <button id="exportBtn" class="primary">エクスポート</button>
+      <label class="ghost" style="padding:10px 14px;cursor:pointer">
+        インポート<input id="importInput" type="file" accept="application/json" style="display:none">
+      </label>
+    </div>
+    <textarea id="memo" placeholder="今日のメモを書いてください。入力は自動保存されます。"></textarea>
+    <div class="meta">
+      <span>保存先：この端末のブラウザ（localStorage）</span>
+      <span>・</span>
+      <span>自動保存：キー入力後 約300ms</span>
+    </div>
+  </div>
+
+  <div class="side">
+    <div class="panel">
+      <h3 style="margin:0 0 8px;font-size:16px">最近のメモ（7日）</h3>
+      <div id="recent"></div>
+    </div>
+    <div class="footer">
+      <span>Tips: 別の日付に切り替えてメモ → 「今日に戻る」で現在に復帰。</span>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const dateEl = document.getElementById('date');
+  const memoEl = document.getElementById('memo');
+  const countEl = document.getElementById('count');
+  const recentEl = document.getElementById('recent');
+  const todayBtn = document.getElementById('todayBtn');
+  const copyBtn = document.getElementById('copyBtn');
+  const clearBtn = document.getElementById('clearBtn');
+  const exportBtn = document.getElementById('exportBtn');
+  const importInput = document.getElementById('importInput');
+
+  const KEY_PREFIX = 'daily_memo:';
+  const fmt = d => d.toISOString().slice(0,10);
+  const today = () => new Date(new Date().toLocaleString('en-US', {timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone}));
+
+  // 初期化：今日をセット
+  function setDateInputTo(d){
+    const ymd = fmt(d);
+    dateEl.value = ymd;
+    loadMemo(ymd);
+  }
+
+  function loadMemo(ymd){
+    const v = localStorage.getItem(KEY_PREFIX+ymd) || '';
+    memoEl.value = v;
+    updateCount();
+    renderRecent();
+  }
+
+  let saveTimer = null;
+  function scheduleSave(){
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(save, 300);
+  }
+
+  function save(){
+    const ymd = dateEl.value;
+    if(!ymd) return;
+    localStorage.setItem(KEY_PREFIX+ymd, memoEl.value);
+    updateCount();
+    renderRecent();
+  }
+
+  function updateCount(){
+    countEl.textContent = (memoEl.value || '').length + ' 文字';
+  }
+
+  function renderRecent(){
+    const base = new Date(dateEl.value || fmt(today()));
+    const items = [];
+    for(let i=0;i<7;i++){
+      const d = new Date(base); d.setDate(d.getDate()-i);
+      const ymd = d.toISOString().slice(0,10);
+      const txt = localStorage.getItem(KEY_PREFIX+ymd) || '';
+      items.push({ymd, txt});
+    }
+    recentEl.innerHTML = items.map(it => `
+      <div class="list-item">
+        <h4>${it.ymd}</h4>
+        <p>${(it.txt || '').replace(/[&<>]/g,c=>({ '&':'&amp;','<':'&lt;','>':'&gt;' }[c]))}</p>
+        <div class="muted" style="font-size:12px">${(it.txt||'').length} 文字</div>
+      </div>
+    `).join('');
+  }
+
+  dateEl.addEventListener('change', () => loadMemo(dateEl.value));
+  memoEl.addEventListener('input', () => { updateCount(); scheduleSave(); });
+
+  todayBtn.addEventListener('click', () => setDateInputTo(today()));
+  copyBtn.addEventListener('click', async () => {
+    try{ await navigator.clipboard.writeText(memoEl.value||''); copyBtn.textContent='コピー済み ✔'; setTimeout(()=>copyBtn.textContent='コピー',1200);}
+    catch(e){ alert('クリップボードにコピーできませんでした。'); }
+  });
+  clearBtn.addEventListener('click', () => {
+    if(confirm('今日のメモを空にしますか？')){
+      memoEl.value=''; save();
+    }
+  });
+
+  exportBtn.addEventListener('click', () => {
+    // localStorage内の全メモを抽出
+    const data = {};
+    for(let i=0;i<localStorage.length;i++){
+      const k = localStorage.key(i);
+      if(k && k.startsWith(KEY_PREFIX)){
+        data[k.replace(KEY_PREFIX,'')] = localStorage.getItem(k) || '';
+      }
+    }
+    const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'daily-memo-backup.json'; a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  importInput.addEventListener('change', (e) => {
+    const file = e.target.files?.[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try{
+        const obj = JSON.parse(reader.result);
+        let count=0;
+        Object.keys(obj).forEach(ymd=>{
+          localStorage.setItem(KEY_PREFIX+ymd, String(obj[ymd]||''));
+          count++;
+        });
+        alert(`インポート完了：${count}件`);
+        loadMemo(dateEl.value);
+      }catch(err){ alert('JSONの読み込みに失敗しました。'); }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  });
+
+  // 初期セット
+  setDateInputTo(today());
+})();
+</script>
+</body>
+</html>
