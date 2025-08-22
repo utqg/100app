@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Simple Pomodoro 25/5</title>
+<style>
+  :root { --w: 360px; --bg:#111; --fg:#fff; --muted:#aaa; }
+  body { margin:0; font-family: system-ui, -apple-system, sans-serif; background:#0b0b0b; color:var(--fg); display:grid; place-items:center; min-height:100dvh;}
+  .app { width: min(92vw, var(--w)); background:#181818; border:1px solid #2a2a2a; border-radius:18px; padding:20px; box-shadow:0 8px 24px rgba(0,0,0,.25);}
+  h1 { font-size:18px; margin:0 0 12px; color:#eaeaea;}
+  .modes{ display:flex; gap:8px; margin-bottom:12px;}
+  .modes button{ flex:1; padding:10px 12px; border-radius:10px; border:1px solid #2a2a2a; background:#202020; color:#ddd; cursor:pointer}
+  .modes button.active{ background:#2f6df6; border-color:#2f6df6; color:#fff; }
+  .time{ font-size:56px; text-align:center; letter-spacing:2px; margin:10px 0 6px;}
+  .progress{ height:10px; background:#222; border:1px solid #2a2a2a; border-radius:999px; overflow:hidden; margin:6px 0 12px;}
+  .bar{ height:100%; width:0%; background:#2f6df6;}
+  .actions{ display:flex; gap:8px;}
+  .actions button{ flex:1; padding:12px; border-radius:10px; border:1px solid #2a2a2a; background:#202020; color:#eee; cursor:pointer; font-weight:600;}
+  .actions button.primary{ background:#2f6df6; border-color:#2f6df6; color:#fff;}
+  .meta{ display:flex; justify-content:space-between; margin-top:10px; color:var(--muted); font-size:12px;}
+  .hint{ margin-top:8px; color:#9ad; font-size:12px; text-align:center;}
+  a { color:#9ad; text-decoration:none; }
+</style>
+</head>
+<body>
+  <div class="app">
+    <h1>Simple Pomodoro 25/5</h1>
+    <div class="modes">
+      <button id="focusBtn" class="active">25分 集中</button>
+      <button id="breakBtn">5分 休憩</button>
+    </div>
+    <div id="time" class="time">25:00</div>
+    <div class="progress"><div id="bar" class="bar"></div></div>
+    <div class="actions">
+      <button id="startBtn" class="primary">スタート</button>
+      <button id="resetBtn">リセット</button>
+    </div>
+    <div class="meta">
+      <span>今日の完了: <strong id="doneToday">0</strong></span>
+      <span id="modeLabel">モード: 集中</span>
+    </div>
+    <div class="hint">音量にご注意ください。終了時にビープが鳴ります。</div>
+  </div>
+
+  <audio id="beep">
+    <source src="data:audio/wav;base64,UklGRhQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABYAAAAA/////w8PDwAAAP///w==" type="audio/wav">
+  </audio>
+
+<script>
+(function(){
+  const focusSec = 25*60, breakSec = 5*60;
+  let total = focusSec, remain = focusSec, timer=null, mode='focus', running=false, startTs=null;
+
+  const $ = id => document.getElementById(id);
+  const timeEl = $('time'), barEl=$('bar'), startBtn=$('startBtn'), resetBtn=$('resetBtn');
+  const focusBtn=$('focusBtn'), breakBtn=$('breakBtn'), modeLabel=$('modeLabel'), beep=$('beep');
+  const doneTodayEl=$('doneToday');
+
+  // 今日のキー
+  const todayKey = 'done_'+new Date().toISOString().slice(0,10);
+  const count = parseInt(localStorage.getItem(todayKey)||'0',10); 
+  doneTodayEl.textContent = count;
+
+  function fmt(s){
+    const m = Math.floor(s/60), sec = s%60;
+    return String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0');
+  }
+  function render(){
+    timeEl.textContent = fmt(remain);
+    const prog = 100 - Math.floor(remain/total*100);
+    barEl.style.width = prog + '%';
+    modeLabel.textContent = 'モード: ' + (mode==='focus'?'集中':'休憩');
+    focusBtn.classList.toggle('active', mode==='focus');
+    breakBtn.classList.toggle('active', mode==='break');
+    startBtn.textContent = running ? '一時停止' : 'スタート';
+  }
+  function tick(){
+    if(!running) return;
+    const now = Date.now();
+    const elapsed = Math.floor((now - startTs)/1000);
+    remain = Math.max(total - elapsed, 0);
+    render();
+    if(remain===0){
+      clearInterval(timer); timer=null; running=false; beep.play();
+      // 完了カウントは集中タイム終了時のみ加算
+      if(mode==='focus'){
+        const c = parseInt(localStorage.getItem(todayKey)||'0',10)+1;
+        localStorage.setItem(todayKey, c);
+        doneTodayEl.textContent = c;
+      }
+    }
+  }
+  function startPause(){
+    if(running){ running=false; clearInterval(timer); timer=null; total=remain; }
+    else {
+      running=true; startTs=Date.now(); timer=setInterval(tick, 250);
+    }
+    render();
+  }
+  function reset(){
+    running=false; clearInterval(timer); timer=null;
+    total = (mode==='focus'?focusSec:breakSec);
+    remain = total; render();
+  }
+  function setMode(m){
+    mode=m; running=false; clearInterval(timer); timer=null;
+    total = (m==='focus'?focusSec:breakSec); remain = total; render();
+  }
+
+  startBtn.addEventListener('click', startPause);
+  resetBtn.addEventListener('click', reset);
+  focusBtn.addEventListener('click', ()=>setMode('focus'));
+  breakBtn.addEventListener('click', ()=>setMode('break'));
+  render();
+})();
+</script>
+</body>
+</html>
