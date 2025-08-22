@@ -1,8 +1,8 @@
+```html
 <meta name="robots" content="noindex,nofollow">
 <script>
   if (sessionStorage.getItem('bonus_ok') !== '1') location.replace('./');
 </script>
-
 
 <!DOCTYPE html>
 <html lang="ja">
@@ -27,6 +27,8 @@
   .meta{ display:flex; justify-content:space-between; margin-top:10px; color:var(--muted); font-size:12px;}
   .hint{ margin-top:8px; color:#9ad; font-size:12px; text-align:center;}
   a { color:#9ad; text-decoration:none; }
+  /* Overlay */
+  #overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);color:white;font-size:3em;align-items:center;justify-content:center;z-index:9999;}
 </style>
 </head>
 <body>
@@ -46,8 +48,10 @@
       <span>今日の完了: <strong id="doneToday">0</strong></span>
       <span id="modeLabel">モード: 集中</span>
     </div>
-    <div class="hint">音量にご注意ください。終了時にビープが鳴ります。</div>
+    <div class="hint">音量にご注意ください。終了時にビープまたは画面表示でお知らせします。</div>
   </div>
+
+  <div id="overlay">🎉 集中終了！休憩しましょう 🎉</div>
 
   <audio id="beep">
     <source src="data:audio/wav;base64,UklGRhQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABYAAAAA/////w8PDwAAAP///w==" type="audio/wav">
@@ -63,7 +67,8 @@
   const focusBtn=$('focusBtn'), breakBtn=$('breakBtn'), modeLabel=$('modeLabel'), beep=$('beep');
   const doneTodayEl=$('doneToday');
 
-  // 今日のキー
+  const overlay=$('overlay');
+
   const todayKey = 'done_'+new Date().toISOString().slice(0,10);
   const count = parseInt(localStorage.getItem(todayKey)||'0',10); 
   doneTodayEl.textContent = count;
@@ -88,15 +93,12 @@
     remain = Math.max(total - elapsed, 0);
     render();
     if(remain===0){
-      clearInterval(timer); timer=null; running=false; beep.play();
-
-　    document.getElementById("overlay").style.display = "flex";
-      5秒後に消す
-      setTimeout(()=>{
-        document.getElementById("overlay").style.display = "none";
-      }, 5000);
-
-      // 完了カウントは集中タイム終了時のみ加算
+      clearInterval(timer); timer=null; running=false;
+      // Overlay表示
+      overlay.style.display="flex";
+      setTimeout(()=>{ overlay.style.display="none"; }, 5000);
+      // 音も併用したいなら有効化
+      // beep.play();
       if(mode==='focus'){
         const c = parseInt(localStorage.getItem(todayKey)||'0',10)+1;
         localStorage.setItem(todayKey, c);
@@ -128,14 +130,6 @@
   render();
 })();
 </script>
-
-<div id="overlay" style="display:none;
-  position:fixed;top:0;left:0;width:100%;height:100%;
-  background:rgba(0,0,0,0.8);color:white;
-  font-size:3em;display:flex;align-items:center;
-  justify-content:center;z-index:9999;">
-  🎉 集中終了！休憩しましょう 🎉
-</div>
-  
 </body>
 </html>
+```
