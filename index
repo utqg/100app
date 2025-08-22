@@ -99,7 +99,7 @@
 <script>
 (function(){
   // ======= 設定 =======
-  const SECRET = "AJ-EBAY-2025"; // ★教材の合言葉に変更
+  const SECRET = "ebay"; // ★教材の合言葉に変更
   const LOCK_MAX_FAILS = 5;
   const LOCK_MINUTES = 5;
   const LS_FAILS = "gate_fail_count";
