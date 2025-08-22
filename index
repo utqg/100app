@@ -1,0 +1,257 @@
+<!-- index.html（合言葉ゲート＋メニューを1ページに統合） -->
+<!doctype html><html lang="ja"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>購入者専用ポータル</title>
+<meta name="robots" content="noindex,nofollow">
+<style>
+  :root{--bg:#0b0b0b;--panel:#181818;--bd:#2a2a2a;--fg:#eaeaea;--muted:#a7a7a7;--pri:#2f6df6}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+  .wrap{max-width:960px;margin:36px auto;padding:0 16px}
+  .card{background:var(--panel);border:1px solid var(--bd);border-radius:16px;padding:18px}
+  h1{font-size:20px;margin:0 0 10px}
+  h2{font-size:16px;margin:0 0 8px}
+  p{margin:0 0 10px;color:var(--muted)}
+  input,button{border:1px solid var(--bd);border-radius:10px}
+  input{width:100%;padding:12px;background:#101010;color:#fff}
+  button{padding:10px 14px;cursor:pointer}
+  .btn{background:var(--pri);border-color:var(--pri);color:#fff;font-weight:700}
+  .ghost{background:#202020;color:#eaeaea}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+  .row{display:flex;gap:8px;align-items:center}
+  .spacer{flex:1}
+  .msg{min-height:1.2em;font-size:13px}
+  .error{color:#ff9a9a}
+  .ok{color:#9fd29f}
+  .muted{color:var(--muted)}
+  .pill{display:inline-block;padding:4px 8px;border:1px solid var(--bd);border-radius:999px;font-size:12px;color:#cfcfcf}
+  .quick{margin:12px 0 0;display:flex;gap:8px;flex-wrap:wrap}
+  .hidden{display:none}
+  .note{font-size:12px;color:#bdbdbd}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <!-- Gate -->
+  <div id="gate" class="card">
+    <h1>購入者限定アクセス</h1>
+    <p>教材に記載の合言葉を入力してください。</p>
+    <div class="row" style="margin-top:8px">
+      <input id="pw" type="password" placeholder="合言葉">
+      <button id="go" class="btn">入場する</button>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <div id="gateMsg" class="msg"></div>
+      <div class="spacer"></div>
+      <span id="envStat" class="pill">環境チェック中…</span>
+    </div>
+    <p class="note">※ 5回誤入力で5分ロック。開いたタブのままご利用ください（sessionStorage継続のため）。</p>
+  </div>
+
+  <!-- Menu -->
+  <div id="menu" class="hidden">
+    <div class="row" style="margin-bottom:10px">
+      <h1>アプリ選択</h1>
+      <div class="spacer"></div>
+      <button id="logout" class="ghost">ログアウト</button>
+    </div>
+
+    <!-- Quick resume -->
+    <div id="resumeCard" class="card hidden" style="margin-bottom:14px">
+      <div class="row">
+        <h2 style="margin:0">前回のアプリに戻る</h2>
+        <div class="spacer"></div>
+        <span id="lastLabel" class="pill"></span>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <button id="resumeBtn" class="btn">前回のアプリを開く</button>
+        <button id="clearLast" class="ghost">記録を消す</button>
+      </div>
+    </div>
+
+    <!-- App cards -->
+    <div class="grid">
+      <div class="card">
+        <h2>Pomodoro 25/5</h2>
+        <p>25分集中 → 5分休憩のシンプルタイマー。</p>
+        <div class="row">
+          <button data-app="pomodoro" data-url="pomodoro.html" class="btn openApp">開く</button>
+          <div class="spacer"></div>
+          <span class="pill"><span id="stat-pomodoro">0</span> 回起動</span>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Daily Memo — 1日1メモ</h2>
+        <p>日付ごとに自動保存。最近7日プレビュー。</p>
+        <div class="row">
+          <button data-app="daily-memo" data-url="daily-memo.html" class="btn openApp">開く</button>
+          <div class="spacer"></div>
+          <span class="pill"><span id="stat-daily-memo">0</span> 回起動</span>
+        </div>
+      </div>
+    </div>
+
+    <p class="note" style="margin-top:10px">※ 新しいタブで開かず、同一タブでの利用を推奨（合言葉の有効状態はタブ単位）。</p>
+  </div>
+</div>
+
+<script>
+(function(){
+  // ======= 設定 =======
+  const SECRET = "AJ-EBAY-2025"; // ★教材の合言葉に変更
+  const LOCK_MAX_FAILS = 5;
+  const LOCK_MINUTES = 5;
+  const LS_FAILS = "gate_fail_count";
+  const LS_LOCK_UNTIL = "gate_lock_until";
+  const LS_LAST_APP = "last_app";
+  const LS_LAUNCH_PREFIX = "launch_count:"; // launch_count:pomodoro 等
+
+  // ======= 要素参照 =======
+  const gate = document.getElementById('gate');
+  const menu = document.getElementById('menu');
+  const pw = document.getElementById('pw');
+  const go = document.getElementById('go');
+  const gateMsg = document.getElementById('gateMsg');
+  const envStat = document.getElementById('envStat');
+  const logoutBtn = document.getElementById('logout');
+  const resumeCard = document.getElementById('resumeCard');
+  const resumeBtn = document.getElementById('resumeBtn');
+  const clearLastBtn = document.getElementById('clearLast');
+  const lastLabel = document.getElementById('lastLabel');
+
+  const statEls = {
+    'pomodoro': document.getElementById('stat-pomodoro'),
+    'daily-memo': document.getElementById('stat-daily-memo')
+  };
+
+  // ======= 環境チェック =======
+  try {
+    sessionStorage.setItem('__t','1'); sessionStorage.removeItem('__t');
+    envStat.textContent = 'OK: セッション維持';
+    envStat.classList.add('ok'); envStat.classList.remove('error');
+  } catch (e){
+    envStat.textContent = 'NG: sessionStorage不可';
+    envStat.classList.add('error');
+  }
+
+  // ======= ロック管理 =======
+  function now(){ return Date.now(); }
+  function getInt(k, def=0){ const v = parseInt(localStorage.getItem(k)||def,10); return isNaN(v)?def:v; }
+  function setInt(k, v){ localStorage.setItem(k, String(v)); }
+  function lockUntilTs(){ return parseInt(localStorage.getItem(LS_LOCK_UNTIL)||'0',10); }
+  function isLocked(){
+    const ts = lockUntilTs();
+    return ts && now()<ts;
+  }
+  function remainStr(){
+    const ms = lockUntilTs() - now();
+    if(ms<=0) return '';
+    const s = Math.ceil(ms/1000);
+    const m = Math.floor(s/60), sec = s%60;
+    return `${m}分${String(sec).padStart(2,'0')}秒`;
+  }
+  let lockTimer=null;
+  function updateLockUI(){
+    if(isLocked()){
+      pw.disabled = true; go.disabled = true;
+      gateMsg.textContent = `ロック中：${remainStr()} 後に再試行可能です。`;
+      gateMsg.className = 'msg error';
+      lockTimer && clearTimeout(lockTimer);
+      lockTimer = setTimeout(updateLockUI, 500);
+    }else{
+      if (pw.disabled){ pw.disabled=false; go.disabled=false; }
+      const fails = getInt(LS_FAILS,0);
+      const left = Math.max(LOCK_MAX_FAILS - fails, 0);
+      gateMsg.textContent = left ? `残り ${left} 回まで誤入力可能です。` : '';
+      gateMsg.className = 'msg';
+      lockTimer && clearTimeout(lockTimer);
+    }
+  }
+  updateLockUI();
+
+  // ======= ゲート処理 =======
+  function enter(){
+    if(isLocked()) return;
+    const v = (pw.value||'').trim();
+    if(v === SECRET){
+      sessionStorage.setItem('bonus_ok','1');
+      localStorage.removeItem(LS_FAILS);
+      localStorage.removeItem(LS_LOCK_UNTIL);
+      showMenu();
+    }else{
+      const fails = getInt(LS_FAILS,0)+1;
+      setInt(LS_FAILS, fails);
+      if(fails>=LOCK_MAX_FAILS){
+        const until = now() + LOCK_MINUTES*60*1000;
+        setInt(LS_LOCK_UNTIL, until);
+      }
+      updateLockUI();
+      if(!isLocked()){
+        gateMsg.textContent = `合言葉が違います。（残り ${Math.max(LOCK_MAX_FAILS - fails,0)} 回）`;
+        gateMsg.className = 'msg error';
+      }
+      pw.select();
+    }
+  }
+  go.addEventListener('click', enter);
+  pw.addEventListener('keydown', e=>{ if(e.key==='Enter') enter(); });
+
+  // ======= メニュー表示 =======
+  function showMenu(){
+    gate.classList.add('hidden');
+    menu.classList.remove('hidden');
+    refreshStats();
+    refreshResume();
+  }
+
+  // 初期表示（セッション維持ならメニューへ）
+  if(sessionStorage.getItem('bonus_ok')==='1'){ showMenu(); }
+
+  // ======= 起動カウント・前回アプリ =======
+  function launch(appId, url){
+    // カウント
+    const k = LS_LAUNCH_PREFIX + appId;
+    setInt(k, getInt(k,0)+1);
+    localStorage.setItem(LS_LAST_APP, JSON.stringify({id:appId, url, at: new Date().toISOString()}));
+    // 同一タブ遷移（sessionStorage維持）
+    location.href = url;
+  }
+
+  function refreshStats(){
+    for(const id of Object.keys(statEls)){
+      const k = LS_LAUNCH_PREFIX + id;
+      statEls[id].textContent = getInt(k,0);
+    }
+  }
+
+  function refreshResume(){
+    const raw = localStorage.getItem(LS_LAST_APP);
+    if(!raw){ resumeCard.classList.add('hidden'); return; }
+    try{
+      const obj = JSON.parse(raw);
+      lastLabel.textContent = obj.id;
+      resumeCard.classList.remove('hidden');
+      resumeBtn.onclick = ()=> launch(obj.id, obj.url);
+      clearLastBtn.onclick = ()=>{ localStorage.removeItem(LS_LAST_APP); refreshResume(); };
+    }catch(_){ resumeCard.classList.add('hidden'); }
+  }
+
+  // 開くボタン（メニュー内）
+  document.querySelectorAll('.openApp').forEach(btn=>{
+    btn.addEventListener('click', (e)=>{
+      e.preventDefault();
+      const id = btn.getAttribute('data-app');
+      const url = btn.getAttribute('data-url');
+      launch(id, url);
+    });
+  });
+
+  // ログアウト
+  logoutBtn.addEventListener('click', ()=>{
+    sessionStorage.removeItem('bonus_ok');
+    location.reload();
+  });
+})();
+</script>
+</body></html>
