@@ -124,7 +124,7 @@
   }
 
   function renderRecent(){
-    const base = today();   // ← 常に今日を基準にする
+    const base = new Date(fmt(today()));   // ← 常に今日を基準にする
     const items = [];
     for(let i=0;i<7;i++){
       const d = new Date(base); d.setDate(d.getDate()-i);
@@ -165,8 +165,7 @@
       if(k && k.startsWith(KEY_PREFIX)){
         const ymd = k.replace(KEY_PREFIX,'');
         // 直近7日分は除外
-        if(!recentDates.includes(ymd)){
-          const txt = localStorage.getItem(k) || '';
+        if(!recentDates.includes(fmt(new Date(ymd)))){
           items.push({ymd, txt});
         }
       }
