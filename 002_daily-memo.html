@@ -131,6 +131,49 @@
     `).join('');
   }
 
+
+    
+  function renderAllMemos(){
+    const items = [];
+    const today = new Date();
+
+    // 直近7日の文字列を作成（ゼロ埋め統一）
+    const recentDates = [];
+    for(let i=0; i<7; i++){
+      const d = new Date(today);
+      d.setDate(today.getDate() - i);
+      const y = d.getFullYear();
+      const m = String(d.getMonth()+1).padStart(2,'0');
+      const day = String(d.getDate()).padStart(2,'0');
+      recentDates.push(`${y}-${m}-${day}`);
+    }
+
+    // localStorage から全件取得
+    for(let i=0;i<localStorage.length;i++){
+      const k = localStorage.key(i);
+      if(k && k.startsWith(KEY_PREFIX)){
+        const ymd = k.replace(KEY_PREFIX,'');
+        // 直近7日分は除外
+        if(!recentDates.includes(ymd)){
+          const txt = localStorage.getItem(k) || '';
+          items.push({ymd, txt});
+        }
+      }
+    }
+
+    // 日付降順に並べ替え
+    items.sort((a,b)=> b.ymd.localeCompare(a.ymd));
+
+    document.getElementById("allMemos").innerHTML = items.map(it => `
+      <div class="list-item">
+        <h4>${it.ymd}</h4>
+        <p>${it.txt.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}</p>
+      </div>
+    `).join('');
+  }
+
+
+    
   dateEl.addEventListener('change', () => loadMemo(dateEl.value));
   memoEl.addEventListener('input', () => { updateCount(); scheduleSave(); });
 
