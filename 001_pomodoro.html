@@ -86,12 +86,18 @@
   };
   document.getElementById('stopBtn').onclick = ()=>{
     running=false; clearInterval(timer);
+    const bgm = document.getElementById("bgm");
+    bgm.pause();          // 停止時に音声も止める
+    bgm.currentTime = 0;  // 再生位置をリセット
   };
   document.getElementById('resetBtn').onclick = ()=>{
     running=false; clearInterval(timer);
     mode='focus'; remain=focusSec; render();
     // リセット時もオーバーレイは必ず消す
     overlay.style.display="none";
+    const bgm = document.getElementById("bgm");
+    bgm.pause();          // リセット時も音声を止める
+    bgm.currentTime = 0;  // 再生位置をリセット
   };
 
   render();
