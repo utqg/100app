@@ -33,6 +33,8 @@
 
 <div id="overlay">🎉 終了！ 🎉</div>
 
+<audio id="bgm" src="sounds/mixkit-recline-and-chill-25.mp3" loop></audio>
+
 <script>
 (function(){
   const focusSec = 25*60, breakSec = 5*60;
@@ -57,10 +59,16 @@
       mode='break'; 
       remain=breakSec; 
       showOverlay("集中終了！休憩しましょう"); 
+      const bgm = document.getElementById("bgm");
+      bgm.currentTime = 0;   // 毎回頭から再生
+      bgm.play();            // 休憩開始と同時に再生
     } else { 
       mode='focus'; 
       remain=focusSec; 
       showOverlay("休憩終了！集中を始めましょう"); 
+      const bgm = document.getElementById("bgm");
+      bgm.pause(); 
+      bgm.currentTime = 0;   // 集中に戻ったら停止＆リセット
     }
     render();
   }
