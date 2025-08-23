@@ -155,7 +155,9 @@
     for(let i=0;i<localStorage.length;i++){
       const k = localStorage.key(i);
       if(k && k.startsWith(KEY_PREFIX)){
-        const ymd = k.replace(KEY_PREFIX,'');
+        const rawYmd = k.replace(KEY_PREFIX,'');
+        const d = new Date(rawYmd);         // 生の日付文字列をDateに変換
+        const ymd = fmt(d);                 // fmt()でゼロ埋めYYYY-MM-DDに統一
         // 直近7日分は除外
         if(!recentDates.includes(ymd)){
           const txt = localStorage.getItem(k) || '';
