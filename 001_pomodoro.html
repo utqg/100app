@@ -91,7 +91,7 @@
   document.getElementById('stopBtn').onclick = ()=>{
     running=false; clearInterval(timer);
     const bgm = document.getElementById("bgm");
-    bgm.pause();          // 停止時に音声も止める
+    if(mode === 'break'){ bgm.pause(); }   // 休憩中なら音も一時停止
   };
   document.getElementById('resetBtn').onclick = ()=>{
     running=false; clearInterval(timer);
