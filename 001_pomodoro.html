@@ -88,9 +88,11 @@ function tick(){
   document.getElementById('startBtn').onclick = ()=>{
   if(running) return;
   running = true;
-  endTime = Date.now() + remain*1000;   // ← 終了予定時刻を設定
+  // 停止時点の remain から新しい endTime を再設定
+  endTime = Date.now() + remain*1000;
   render();
   timer = setInterval(tick,1000);
+
   if(mode === 'break'){
     const bgm = document.getElementById("bgm");
     bgm.play();
@@ -98,11 +100,16 @@ function tick(){
 };
 
   document.getElementById('stopBtn').onclick = ()=>{
-  running=false; clearInterval(timer); timer=null;
-  // remain は tick() で更新されているので保持される
-  const bgm = document.getElementById("bgm");
-  if(mode === 'break'){ bgm.pause(); }
+    running = false;
+    clearInterval(timer); 
+    timer = null;
+    // 停止時点での残り時間を確定して保存
+    remain = Math.max(0, Math.floor((endTime - Date.now())/1000));
+
+    const bgm = document.getElementById("bgm");
+    if(mode === 'break'){ bgm.pause(); }
 };
+
 
   document.getElementById('resetBtn').onclick = ()=>{
     running=false; clearInterval(timer);
