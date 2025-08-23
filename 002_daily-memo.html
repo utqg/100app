@@ -141,6 +141,44 @@
     `).join('');
   }
 
+  
+  
+  // 全メモを表示する関数
+  function renderAllMemos(){
+    const items = [];
+    for(let i=0;i<localStorage.length;i++){
+      const k = localStorage.key(i);
+      if(k && k.startsWith(KEY_PREFIX)){
+        const ymd = k.replace(KEY_PREFIX,'');
+        const txt = localStorage.getItem(k) || '';
+        items.push({ymd, txt});
+      }
+    }
+    // 日付降順に並べ替え
+    items.sort((a,b)=> b.ymd.localeCompare(a.ymd));
+    document.getElementById("allMemos").innerHTML = items.map(it => `
+      <div class="list-item">
+        <h4>${it.ymd}</h4>
+        <p>${it.txt.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}</p>
+      </div>
+    `).join('');
+  }
+
+  // トグルボタン
+  document.getElementById("toggleAllBtn").addEventListener("click", ()=>{
+    const all = document.getElementById("allMemos");
+    if(all.style.display === "none"){
+      renderAllMemos();
+      all.style.display = "block";
+      toggleAllBtn.textContent = "閉じる";
+    } else {
+      all.style.display = "none";
+      toggleAllBtn.textContent = "開く";
+    }
+  });
+
+
+  
   dateEl.addEventListener('change', () => loadMemo(dateEl.value));
   memoEl.addEventListener('input', () => { scheduleSave(); });
 
