@@ -39,6 +39,8 @@
 (function(){
   const focusSec = 25*60, breakSec = 5*60;
   let remain = focusSec, timer=null, running=false, mode='focus';
+  let endTime = null;   // ← 終了予定時刻を追加
+
 
   const timeEl = document.getElementById('time');
   const modeEl = document.getElementById('mode');
@@ -73,26 +75,35 @@
     render();
   }
 
-  function tick(){
-    if(!running) return;
-    remain--; render();
-    if(remain<0) switchMode();
+function tick(){
+  if(!running) return;
+  remain = Math.max(0, Math.floor((endTime - Date.now())/1000));  // ← 時刻差で再計算
+  render();
+  if(remain <= 0){
+    stop();
+    switchMode();
   }
+}
 
   document.getElementById('startBtn').onclick = ()=>{
-    if(running) return;
-    running=true; render();
-    timer=setInterval(tick,1000);
-    if(mode === 'break'){
-      const bgm = document.getElementById("bgm");
-      bgm.play();
-    }
-  };
-  document.getElementById('stopBtn').onclick = ()=>{
-    running=false; clearInterval(timer);
+  if(running) return;
+  running = true;
+  endTime = Date.now() + remain*1000;   // ← 終了予定時刻を設定
+  render();
+  timer = setInterval(tick,1000);
+  if(mode === 'break'){
     const bgm = document.getElementById("bgm");
-    if(mode === 'break'){ bgm.pause(); }   // 休憩中なら音も一時停止
-  };
+    bgm.play();
+  }
+};
+
+  document.getElementById('stopBtn').onclick = ()=>{
+  running=false; clearInterval(timer); timer=null;
+  // remain は tick() で更新されているので保持される
+  const bgm = document.getElementById("bgm");
+  if(mode === 'break'){ bgm.pause(); }
+};
+
   document.getElementById('resetBtn').onclick = ()=>{
     running=false; clearInterval(timer);
     mode='focus'; remain=focusSec; render();
