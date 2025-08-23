@@ -43,7 +43,6 @@
     <div class="row">
       <input id="date" type="date" />
       <button id="todayBtn" class="ghost">今日に戻る</button>
-      <span id="count" class="muted">0 文字</span>
       <div style="flex:1"></div>
       <button id="copyBtn" class="ghost">コピー</button>
       <button id="clearBtn" class="ghost">今日のメモを空に</button>
@@ -111,12 +110,7 @@
     const ymd = dateEl.value;
     if(!ymd) return;
     localStorage.setItem(KEY_PREFIX+ymd, memoEl.value);
-    updateCount();
     renderRecent();
-  }
-
-  function updateCount(){
-    countEl.textContent = (memoEl.value || '').length + ' 文字';
   }
 
   function renderRecent(){
@@ -138,7 +132,7 @@
   }
 
   dateEl.addEventListener('change', () => loadMemo(dateEl.value));
-  memoEl.addEventListener('input', () => { updateCount(); scheduleSave(); });
+  memoEl.addEventListener('input', () => { scheduleSave(); });
 
   todayBtn.addEventListener('click', () => setDateInputTo(today()));
   copyBtn.addEventListener('click', async () => {
