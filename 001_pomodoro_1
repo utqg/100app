@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pomodoro Timer</title>
+<style>
+  body { margin:0; font-family: sans-serif; background:#0b0b0b; color:#fff; display:grid; place-items:center; min-height:100vh; }
+  .app { width:300px; background:#181818; border-radius:12px; padding:20px; text-align:center; }
+  .time { font-size:48px; margin:20px 0; }
+  .btns button { margin:5px; padding:10px 16px; border:none; border-radius:8px; cursor:pointer; }
+  .start { background:#2f6df6; color:#fff; }
+  .stop { background:#d9534f; color:#fff; }
+  .reset { background:#5bc0de; color:#fff; }
+  #overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85);
+             color:white; font-size:2em; display:flex; align-items:center; justify-content:center; z-index:9999; }
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>Pomodoro Timer</h1>
+  <div id="mode">モード: 待機</div>
+  <div id="time" class="time">25:00</div>
+  <div class="btns">
+    <button id="startBtn" class="start">スタート</button>
+    <button id="stopBtn" class="stop">停止</button>
+    <button id="resetBtn" class="reset">リセット</button>
+  </div>
+</div>
+
+<div id="overlay">🎉 終了！ 🎉</div>
+
+<script>
+(function(){
+  const focusSec = 25*60, breakSec = 5*60;
+  let remain = focusSec, timer=null, running=false, mode='focus';
+
+  const timeEl = document.getElementById('time');
+  const modeEl = document.getElementById('mode');
+  const overlay = document.getElementById('overlay');
+
+  function fmt(s){ const m=Math.floor(s/60), sec=s%60; return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`; }
+
+  function render(){ timeEl.textContent = fmt(remain); modeEl.textContent = `モード: ${mode==='focus'?'集中':'休憩'}`; }
+
+  function showOverlay(msg){
+    overlay.textContent = msg;
+    overlay.style.display = "flex";
+    setTimeout(()=>{ overlay.style.display="none"; }, 5000);
+  }
+
+  function switchMode(){
+    if(mode==='focus'){ mode='break'; remain=breakSec; showOverlay("集中終了！休憩しましょう"); }
+    else { mode='focus'; remain=focusSec; showOverlay("休憩終了！集中を始めましょう"); }
+    render();
+  }
+
+  function tick(){
+    if(!running) return;
+    remain--; render();
+    if(remain<=0) switchMode();
+  }
+
+  document.getElementById('startBtn').onclick = ()=>{
+    if(running) return;
+    running=true; render();
+    timer=setInterval(tick,1000);
+  };
+  document.getElementById('stopBtn').onclick = ()=>{
+    running=false; clearInterval(timer);
+  };
+  document.getElementById('resetBtn').onclick = ()=>{
+    running=false; clearInterval(timer);
+    mode='focus'; remain=focusSec; render();
+  };
+
+  render();
+})();
+</script>
+</body>
+</html>
