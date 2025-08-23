@@ -77,13 +77,17 @@
 
 function tick(){
   if(!running) return;
-  remain = Math.max(0, Math.floor((endTime - Date.now())/1000));  // ← 時刻差で再計算
-  render();
-  if(remain <= 0){
-    stop();
-    switchMode();
+  const newRemain = Math.max(0, Math.floor((endTime - Date.now())/1000));
+  if(newRemain !== remain){   // remain が変わったときだけ更新
+    remain = newRemain;
+    render();
+    if(remain <= 0){
+      stop();
+      switchMode();
+    }
   }
 }
+
 
   document.getElementById('startBtn').onclick = ()=>{
   if(running) return;
@@ -92,7 +96,6 @@ function tick(){
   endTime = Date.now() + remain*1000;
   render();
   timer = setInterval(tick,1000);
-
   if(mode === 'break'){
     const bgm = document.getElementById("bgm");
     bgm.play();
