@@ -67,7 +67,7 @@
   function tick(){
     if(!running) return;
     remain--; render();
-    if(remain<=0) switchMode();
+    if(remain<0) switchMode();
   }
 
   document.getElementById('startBtn').onclick = ()=>{
