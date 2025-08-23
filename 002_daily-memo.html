@@ -46,11 +46,9 @@
         インポート<input id="importInput" type="file" accept="application/json" style="display:none">
       </label>
     </div>
-    <textarea id="memo" placeholder="今日のメモを書いてください。入力は自動保存されます。"></textarea>
+    <textarea id="memo" placeholder="今日の学びと行動を書いてください。メモは端末のブラウザに自動保存されます。"></textarea>
     <div class="meta">
-      <span>保存先：この端末のブラウザ（localStorage）</span>
-      <span>・</span>
-      <span>自動保存：キー入力後 約300ms</span>
+      <span>Tips: 過去の日付に切り替えるとメモを編集できます → 今日のメモに戻るときは「今日に戻る」をクリック。</span>
     </div>
   </div>
 
@@ -58,9 +56,6 @@
     <div class="panel">
       <h3 style="margin:0 0 8px;font-size:16px">最近のメモ（7日）</h3>
       <div id="recent"></div>
-    </div>
-    <div class="footer">
-      <span>Tips: 別の日付に切り替えてメモ → 「今日に戻る」で現在に復帰。</span>
     </div>
   </div>
 
