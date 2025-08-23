@@ -83,6 +83,10 @@
     if(running) return;
     running=true; render();
     timer=setInterval(tick,1000);
+    if(mode === 'break'){
+      const bgm = document.getElementById("bgm");
+      bgm.play();
+    }
   };
   document.getElementById('stopBtn').onclick = ()=>{
     running=false; clearInterval(timer);
