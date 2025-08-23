@@ -92,7 +92,6 @@
     running=false; clearInterval(timer);
     const bgm = document.getElementById("bgm");
     bgm.pause();          // 停止時に音声も止める
-    bgm.currentTime = 0;  // 再生位置をリセット
   };
   document.getElementById('resetBtn').onclick = ()=>{
     running=false; clearInterval(timer);
