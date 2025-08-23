@@ -173,6 +173,25 @@
         <p>${it.txt.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}</p>
       </div>
     `).join('');
+
+    const toggleBtn = document.getElementById("toggleAllBtn");
+    if(toggleBtn){
+      toggleBtn.addEventListener("click", ()=>{
+        const all = document.getElementById("allMemos");
+        if(all.style.display === "none"){
+          try {
+            renderAllMemos();
+          } catch(e){
+            console.error("renderAllMemos error", e);
+          }
+          all.style.display = "block";
+          toggleBtn.textContent = "閉じる";
+        } else {
+          all.style.display = "none";
+          toggleBtn.textContent = "開く";
+        }
+      });
+    }
   }
 
 
