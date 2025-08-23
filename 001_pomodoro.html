@@ -92,8 +92,8 @@ function tick(){
   document.getElementById('startBtn').onclick = ()=>{
   if(running) return;
   running = true;
-  // 停止時点の remain から新しい endTime を再設定
-  endTime = Date.now() + remain*1000;
+  // 終了予定時刻を「現在時刻の切り上げ1秒後」から計算する
+  endTime = Date.now() + (remain*1000) + 999;  
   render();
   timer = setInterval(tick,1000);
   if(mode === 'break'){
