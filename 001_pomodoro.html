@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Pomodoro Timer</title>
+<title>Pomodoro Timer (Test 25s/5s)</title>
 <style>
   body { margin:0; font-family: sans-serif; background:#0b0b0b; color:#fff; display:grid; place-items:center; min-height:100vh; }
   .app { width:300px; background:#181818; border-radius:12px; padding:20px; text-align:center; }
@@ -12,15 +12,16 @@
   .start { background:#2f6df6; color:#fff; }
   .stop { background:#d9534f; color:#fff; }
   .reset { background:#5bc0de; color:#fff; }
+  /* オーバーレイは初期状態で非表示 */
   #overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85);
-             color:white; font-size:2em; display:flex; align-items:center; justify-content:center; z-index:9999; }
+             color:white; font-size:2em; align-items:center; justify-content:center; z-index:9999; }
 </style>
 </head>
 <body>
 <div class="app">
   <h1>Pomodoro Timer</h1>
   <div id="mode">モード: 待機</div>
-  <div id="time" class="time">25:00</div>
+  <div id="time" class="time">00:25</div>
   <div class="btns">
     <button id="startBtn" class="start">スタート</button>
     <button id="stopBtn" class="stop">停止</button>
@@ -32,7 +33,8 @@
 
 <script>
 (function(){
-  const focusSec = 25*60, breakSec = 5*60;
+  // テスト用に25秒＋5秒
+  const focusSec = 25, breakSec = 5;
   let remain = focusSec, timer=null, running=false, mode='focus';
 
   const timeEl = document.getElementById('time');
@@ -50,8 +52,15 @@
   }
 
   function switchMode(){
-    if(mode==='focus'){ mode='break'; remain=breakSec; showOverlay("集中終了！休憩しましょう"); }
-    else { mode='focus'; remain=focusSec; showOverlay("休憩終了！集中を始めましょう"); }
+    if(mode==='focus'){ 
+      mode='break'; 
+      remain=breakSec; 
+      showOverlay("集中終了！休憩しましょう"); 
+    } else { 
+      mode='focus'; 
+      remain=focusSec; 
+      showOverlay("休憩終了！集中を始めましょう"); 
+    }
     render();
   }
 
@@ -72,6 +81,8 @@
   document.getElementById('resetBtn').onclick = ()=>{
     running=false; clearInterval(timer);
     mode='focus'; remain=focusSec; render();
+    // リセット時もオーバーレイは必ず消す
+    overlay.style.display="none";
   };
 
   render();
