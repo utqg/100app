@@ -23,7 +23,7 @@
   <h1>Pomodoro Timer</h1>
   <div id="cycle">25分集中 🔄 5分休憩</div>
   <div id="mode">モード: 待機</div>
-  <div id="time" class="time">00:25</div>
+  <div id="time" class="time">25:00</div>
   <div class="btns">
     <button id="startBtn" class="start">スタート</button>
     <button id="stopBtn" class="stop">停止</button>
@@ -35,8 +35,7 @@
 
 <script>
 (function(){
-  // テスト用に25秒＋5秒
-  const focusSec = 25, breakSec = 5;
+  const focusSec = 25*60, breakSec = 5*60;
   let remain = focusSec, timer=null, running=false, mode='focus';
 
   const timeEl = document.getElementById('time');
