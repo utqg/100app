@@ -119,19 +119,17 @@
   }
 
   function renderRecent(){
-    const base = new Date(fmt(today()));   // ← 常に今日を基準にする
+    const base = today();   // ← 常に今日を基準にする
     const items = [];
     for(let i=0;i<7;i++){
-      const d = new Date(base); d.setDate(d.getDate()-i);
-      const ymd = d.toISOString().slice(0,10);
+      const d = new Date(base);
+      const ymd = fmt(d);
       const txt = localStorage.getItem(KEY_PREFIX+ymd) || '';
       items.push({ymd, txt});
     }
     recentEl.innerHTML = items.map(it => `
       <div class="list-item">
         <h4>${it.ymd}</h4>
-        <p>${(it.txt || '').replace(/[&<>]/g,c=>({ '&':'&amp;','<':'&lt;','>':'&gt;' }[c]))}</p>
-        <div class="muted" style="font-size:12px">${(it.txt||'').length} 文字</div>
       </div>
     `).join('');
   }
