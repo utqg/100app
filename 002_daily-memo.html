@@ -146,12 +146,26 @@
   // 全メモを表示する関数
   function renderAllMemos(){
     const items = [];
+    const today = new Date();
+
+    // 直近7日の日付を文字列にして保持
+    const recentDates = [];
+    for(let i=0; i<7; i++){
+      const d = new Date(today);
+      d.setDate(today.getDate() - i);
+      recentDates.push(d.toISOString().slice(0,10));
+    }
+
+    // localStorage から全件取得
     for(let i=0;i<localStorage.length;i++){
       const k = localStorage.key(i);
       if(k && k.startsWith(KEY_PREFIX)){
         const ymd = k.replace(KEY_PREFIX,'');
-        const txt = localStorage.getItem(k) || '';
-        items.push({ymd, txt});
+        // 直近7日分は除外
+        if(!recentDates.includes(ymd)){
+          const txt = localStorage.getItem(k) || '';
+          items.push({ymd, txt});
+        }
       }
     }
     // 日付降順に並べ替え
