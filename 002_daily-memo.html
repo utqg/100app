@@ -124,7 +124,7 @@
   }
 
   function renderRecent(){
-    const base = new Date(dateEl.value || fmt(today()));
+    const base = today();   // ← 常に今日を基準にする
     const items = [];
     for(let i=0;i<7;i++){
       const d = new Date(base); d.setDate(d.getDate()-i);
